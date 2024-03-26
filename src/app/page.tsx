@@ -283,31 +283,32 @@ export default function Home() {
 
                             </div>
 
-                            {createPortal(
-                                   <DragOverlay>
-                                          {activeContainer && (
-                                                 <ColumnContainer
-                                                        column={activeContainer}
-                                                        deleteColumn={deleteColumn}
-                                                        updateColumn={updateColumn}
-                                                        createTask={createTask}
-                                                        deleteTask={deleteTask}
-                                                        updateTask={updateTask}
-                                                        tasks={items.filter(
-                                                               (task) => task.columnId === activeContainer.id
-                                                        )}
-                                                 />
-                                          )}
-                                          {activeTask && (
-                                                 <TaskCard
-                                                        task={activeTask}
-                                                        deleteTask={deleteTask}
-                                                        updateTask={updateTask}
-                                                 />
-                                          )}
-                                   </DragOverlay>,
-                                   document.body
-                            )}
+
+                            <DragOverlay>
+                                   {activeContainer && (
+                                          <ColumnContainer
+                                                 column={activeContainer}
+                                                 deleteColumn={deleteColumn}
+                                                 updateColumn={updateColumn}
+                                                 createTask={createTask}
+                                                 deleteTask={deleteTask}
+                                                 updateTask={updateTask}
+                                                 tasks={items.filter(
+                                                        (task) => task.columnId === activeContainer.id
+                                                 )}
+                                          />
+                                   )}
+                                   {activeTask && (
+                                          <TaskCard
+                                                 task={activeTask}
+                                                 deleteTask={deleteTask}
+                                                 updateTask={updateTask}
+                                          />
+                                   )}
+                            </DragOverlay>,
+
+
+
                      </DndContext>
               </div>
        );
