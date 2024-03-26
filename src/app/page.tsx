@@ -1,113 +1,314 @@
-import Image from "next/image";
+"use client"
+
+import { useMemo, useState } from "react";
+import { Column, Id, Task } from "./utils/types";
+import { DndContext, DragEndEvent, DragOverEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { arrayMove, SortableContext } from "@dnd-kit/sortable";
+import ColumnContainer from "./components/ColumnContainer";
+import { createPortal } from "react-dom";
+import TaskCard from "./components/TaskCard";
+
+const defaultConts: Column[] = [
+       {
+              id: "todo",
+              title: "TO DO",
+       },
+       {
+              id: "progress",
+              title: "IN PROGRESS",
+       },
+       {
+              id: "doing",
+              title: "IN REVIEW",
+       },
+       {
+              id: "done",
+              title: "COMPLETED",
+       },
+];
+
+const defaultTasks: Task[] = [
+       {
+              id: "1",
+              columnId: "todo",
+              content: "List admin APIs for dashboard",
+       },
+       {
+              id: "2",
+              columnId: "todo",
+              content:
+                     "Develop user registration functionality with OTP delivered on SMS after email confirmation and phone number confirmation",
+       },
+       {
+              id: "3",
+              columnId: "doing",
+              content: "Conduct security testing",
+       },
+       {
+              id: "4",
+              columnId: "doing",
+              content: "Analyze competitors",
+       },
+       {
+              id: "5",
+              columnId: "done",
+              content: "Create UI kit documentation",
+       },
+       {
+              id: "6",
+              columnId: "done",
+              content: "Dev meeting",
+       },
+       {
+              id: "7",
+              columnId: "done",
+              content: "Deliver dashboard prototype",
+       },
+       {
+              id: "8",
+              columnId: "todo",
+              content: "Optimize application performance",
+       },
+       {
+              id: "9",
+              columnId: "todo",
+              content: "Implement data validation",
+       },
+       {
+              id: "10",
+              columnId: "todo",
+              content: "Design database schema",
+       },
+       {
+              id: "11",
+              columnId: "todo",
+              content: "Integrate SSL web certificates into workflow",
+       },
+       {
+              id: "12",
+              columnId: "doing",
+              content: "Implement error logging and monitoring",
+       },
+       {
+              id: "13",
+              columnId: "doing",
+              content: "Design and implement responsive UI",
+       },
+];
 
 export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+       const [containers, setContainers] = useState<Column[]>(defaultConts)
+       const [items, setItems] = useState<Task[]>(defaultTasks)
+       const [activeContainer, setActiveContainer] = useState<Column | null>(null);
+       const [activeTask, setActiveTask] = useState<Task | null>(null);
+       const columnsId = useMemo(() => containers.map((col) => col.id), [containers]);
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+       const sensors = useSensors(
+              useSensor(PointerSensor, {
+                     activationConstraint: {
+                            distance: 10,
+                     },
+              })
+       );
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+       const onDragStart = (event: DragStartEvent) => {
+              if (event.active.data.current?.type === "Column") {
+                     setActiveContainer(event.active.data.current.column);
+                     return;
+              }
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+              if (event.active.data.current?.type === "Task") {
+                     setActiveTask(event.active.data.current.task);
+                     return;
+              }
+       }
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+       const onDragEnd = (event: DragEndEvent) => {
+              setActiveContainer(null);
+              setActiveTask(null);
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+              const { active, over } = event;
+              if (!over) return;
+
+              const activeId = active.id;
+              const overId = over.id;
+
+              if (activeId === overId) return;
+
+              const isActiveAColumn = active.data.current?.type === "Column";
+              if (!isActiveAColumn) return;
+
+              console.log("DRAG END");
+
+              setContainers((columns) => {
+                     const activeColumnIndex = columns.findIndex((col) => col.id === activeId);
+
+                     const overColumnIndex = columns.findIndex((col) => col.id === overId);
+
+                     return arrayMove(columns, activeColumnIndex, overColumnIndex);
+              });
+       }
+
+       const onDragOver = (event: DragOverEvent) => {
+              const { active, over } = event;
+              if (!over) return;
+
+              const activeId = active.id;
+              const overId = over.id
+
+              if (activeId === overId) return;
+
+              const isActiveATask = active.data.current?.type === "Task";
+              const isOverATask = over.data.current?.type === "Task";
+
+              if (!isActiveATask) return;
+
+              // Im dropping a Task over another Task
+              if (isActiveATask && isOverATask) {
+                     setItems((tasks) => {
+                            const activeIndex = tasks.findIndex((t) => t.id === activeId);
+                            const overIndex = tasks.findIndex((t) => t.id === overId);
+
+                            if (tasks[activeIndex].columnId != tasks[overIndex].columnId) {
+                                   // Fix introduced after video recording
+                                   tasks[activeIndex].columnId = tasks[overIndex].columnId;
+                                   return arrayMove(tasks, activeIndex, overIndex - 1);
+                            }
+
+                            return arrayMove(tasks, activeIndex, overIndex);
+                     });
+              }
+
+              const isOverAColumn = over.data.current?.type === "Column";
+
+              // Im dropping a Task over a column
+              if (isActiveATask && isOverAColumn) {
+                     setItems((tasks) => {
+                            const activeIndex = tasks.findIndex((t) => t.id === activeId);
+
+                            tasks[activeIndex].columnId = overId;
+                            console.log("DROPPING TASK OVER COLUMN", { activeIndex });
+                            return arrayMove(tasks, activeIndex, activeIndex);
+                     });
+              }
+       }
+
+       const createTask = (columnId: Id) => {
+              const newTask: Task = {
+                     id: generateId(),
+                     columnId,
+                     content: `Task ${items.length + 1}`,
+              };
+
+              setItems([...items, newTask]);
+       }
+
+       const deleteTask = (id: Id) => {
+              const newTasks = items.filter((task) => task.id !== id);
+              setItems(newTasks);
+       }
+
+       const updateTask = (id: Id, content: string) => {
+              const newTasks = items.map((task) => {
+                     if (task.id !== id) return task;
+                     return { ...task, content };
+              });
+
+              setItems(newTasks);
+       }
+
+       const createNewColumn = () => {
+              const columnToAdd: Column = {
+                     id: generateId(),
+                     title: `Column ${containers.length + 1}`,
+              };
+
+              setContainers([...containers, columnToAdd]);
+       }
+
+       const deleteColumn = (id: Id) => {
+              const filteredColumns = containers.filter((col) => col.id !== id);
+              setContainers(filteredColumns);
+
+              const newTasks = items.filter((t) => t.columnId !== id);
+              setItems(newTasks);
+       }
+
+       const updateColumn = (id: Id, title: string) => {
+              const newColumns = containers.map((col) => {
+                     if (col.id !== id) return col;
+                     return { ...col, title };
+              });
+
+              setContainers(newColumns);
+       }
+
+       const generateId = () => {
+              return Math.floor(Math.random() * 10001);
+       }
+
+       return (
+              <div className=" bg-[#EBEBEB] flex py-20 w-full overflow-x-auto ">
+                     <DndContext
+                            sensors={sensors}
+                            onDragStart={onDragStart}
+                            onDragEnd={onDragEnd}
+                            onDragOver={onDragOver}
+                     >
+                            <div className="flex gap-4">
+                                   <div className="flex gap-4">
+                                          <SortableContext items={columnsId}>
+                                                 {containers.map((col) => (
+                                                        <ColumnContainer
+                                                               key={col.id}
+                                                               column={col}
+                                                               deleteColumn={deleteColumn}
+                                                               updateColumn={updateColumn}
+                                                               createTask={createTask}
+                                                               deleteTask={deleteTask}
+                                                               updateTask={updateTask}
+                                                               tasks={items.filter((task) => task.columnId === col.id)}
+                                                        />
+                                                 ))}
+                                          </SortableContext>
+                                   </div>
+                                   <button
+                                          onClick={() => {
+                                                 createNewColumn();
+                                          }}
+                                          className="cursor-pointer rounded-lg p-2 bg-green-800 text-white h-fit flex ">
+
+                                          Add Column
+                                   </button>
+
+                            </div>
+
+                            {createPortal(
+                                   <DragOverlay>
+                                          {activeContainer && (
+                                                 <ColumnContainer
+                                                        column={activeContainer}
+                                                        deleteColumn={deleteColumn}
+                                                        updateColumn={updateColumn}
+                                                        createTask={createTask}
+                                                        deleteTask={deleteTask}
+                                                        updateTask={updateTask}
+                                                        tasks={items.filter(
+                                                               (task) => task.columnId === activeContainer.id
+                                                        )}
+                                                 />
+                                          )}
+                                          {activeTask && (
+                                                 <TaskCard
+                                                        task={activeTask}
+                                                        deleteTask={deleteTask}
+                                                        updateTask={updateTask}
+                                                 />
+                                          )}
+                                   </DragOverlay>,
+                                   document.body
+                            )}
+                     </DndContext>
+              </div>
+       );
 }
